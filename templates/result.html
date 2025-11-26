@@ -119,6 +119,18 @@
             text-align: center;
             margin: 40px 0 30px;
         }
+
+        /* Sorting control small adjustments */
+        .sort-inline {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+        .sort-inline .form-label {
+            margin-bottom: 0.25rem;
+            font-weight: 600;
+        }
     </style>
 </head>
 
@@ -149,23 +161,38 @@
             <div class="row align-items-center g-3">
                 <div class="col-md-2">
                     <label class="form-label">⭐ Sao tối thiểu</label>
-                    <input type="number" name="stars" min="1" max="5" class="form-control" placeholder="VD: 4">
+                    <input type="number" name="stars" min="1" max="5" class="form-control" placeholder="VD: 4" value="{{ request.args.get('stars','') }}">
                 </div>
                 <div class="col-md-2">
                     <label class="form-label">💰 Ngân sách (VND)</label>
-                    <input type="number" name="budget" class="form-control" placeholder="VD: 2000000">
+                    <input type="number" name="budget" class="form-control" placeholder="VD: 2000000" value="{{ request.args.get('budget','') }}">
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">Sắp xếp theo</label>
+                    <label class="form-label">Sắp xếp theo (server)</label>
                     <select name="sort" class="form-select">
                         <option value="">-- Không --</option>
-                        <option value="asc">💵 Giá tăng dần</option>
-                        <option value="desc">💰 Giá giảm dần</option>
+                        <option value="asc" {% if request.args.get('sort') == 'asc' %}selected{% endif %}>💵 Giá tăng dần</option>
+                        <option value="desc" {% if request.args.get('sort') == 'desc' %}selected{% endif %}>💰 Giá giảm dần</option>
                     </select>
                 </div>
+
+                <!-- Client-side sorting control (added) -->
                 <div class="col-md-3">
+                    <label class="form-label">Sắp xếp nhanh (trên trang)</label>
+                    <div class="sort-inline">
+                        <select id="client-sort" class="form-select">
+                            <option value="">-- Không --</option>
+                            <option value="price-asc">Giá tăng dần</option>
+                            <option value="price-desc">Giá giảm dần</option>
+                            <option value="stars-asc">Số sao tăng dần</option>
+                            <option value="stars-desc">Số sao giảm dần</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="col-md-2">
                     <label class="form-label">🏙️ Thành phố</label>
-                    <input type="text" name="location" class="form-control" placeholder="VD: Đà Nẵng">
+                    <input type="text" name="location" class="form-control" placeholder="VD: Đà Nẵng" value="{{ request.args.get('location','') }}">
                 </div>
                 <div class="col-md-2 text-center">
                     <button type="submit" class="btn btn-custom mt-4 px-4">🔍 Lọc</button>
@@ -174,9 +201,9 @@
         </form>
 
         <!-- Kết quả -->
-        <div class="row">
+        <div class="row" id="hotel-grid">
             {% for hotel in hotels %}
-            <div class="col-md-4 mb-4">
+            <div class="col-md-4 mb-4 hotel-card-wrap" data-price="{{ hotel.price }}" data-stars="{{ hotel.stars }}">
                 <div class="card h-100 shadow">
                     <img src="{{ hotel.image_url or hotel.image }}" class="card-img-top" alt="{{ hotel.name }}">
                     <div class="card-body">
@@ -206,8 +233,64 @@
     </div>
     {% endif %}
 
+    <script>
+        (function() {
+            // Helper: parse price string to number (handles commas, currency symbols)
+            function parseNumber(value) {
+                if (value === null || value === undefined) return NaN;
+                if (typeof value === 'number') return value;
+                var s = String(value).replace(/[^\d\.\-]/g, '');
+                var n = parseFloat(s);
+                return isNaN(n) ? NaN : n;
+            }
+
+            // Sort hotel cards inside #hotel-grid by data attribute
+            function sortHotels(mode) {
+                var grid = document.getElementById('hotel-grid');
+                if (!grid) return;
+                var items = Array.prototype.slice.call(grid.querySelectorAll('.hotel-card-wrap'));
+                if (!mode) {
+                    // no client-side sort: keep current DOM order (server order)
+                    return;
+                }
+
+                items.sort(function(a, b) {
+                    if (mode === 'price-asc' || mode === 'price-desc') {
+                        var va = parseNumber(a.dataset.price);
+                        var vb = parseNumber(b.dataset.price);
+                        // push NaN to end for asc, to start for desc
+                        if (isNaN(va) && isNaN(vb)) return 0;
+                        if (isNaN(va)) return mode === 'price-asc' ? 1 : -1;
+                        if (isNaN(vb)) return mode === 'price-asc' ? -1 : 1;
+                        return mode === 'price-asc' ? va - vb : vb - va;
+                    } else if (mode === 'stars-asc' || mode === 'stars-desc') {
+                        var sa = parseNumber(a.dataset.stars);
+                        var sb = parseNumber(b.dataset.stars);
+                        if (isNaN(sa) && isNaN(sb)) return 0;
+                        if (isNaN(sa)) return mode === 'stars-asc' ? 1 : -1;
+                        if (isNaN(sb)) return mode === 'stars-asc' ? -1 : 1;
+                        return mode === 'stars-asc' ? sa - sb : sb - sa;
+                    }
+                    return 0;
+                });
+
+                // Re-append in sorted order
+                items.forEach(function(it) {
+                    grid.appendChild(it);
+                });
+            }
+
+            // Wire up client-side sort select
+            var clientSort = document.getElementById('client-sort');
+            if (clientSort) {
+                clientSort.addEventListener('change', function() {
+                    sortHotels(this.value);
+                });
+            }
+
+            // Optionally, preserve client sort selection if page reloaded with server sort
+            // No automatic action on load to avoid surprising behavior; user triggers sort explicitly.
+        })();
+    </script>
 </body>
 </html>
-
-
-
