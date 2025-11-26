@@ -205,6 +205,40 @@
         😢 Không tìm thấy khách sạn nào phù hợp với yêu cầu của bạn.
     </div>
     {% endif %}
+
+    <label for="sort-by">Sắp xếp theo:</label>
+    <select id="sort-by">
+      <option value="">-- Không sắp xếp --</option>
+      <option value="price-asc">Giá tăng dần</option>
+      <option value="price-desc">Giá giảm dần</option>
+      <option value="stars-asc">Số sao tăng dần</option>
+      <option value="stars-desc">Số sao giảm dần</option>
+    </select>
+
+    <div id="hotel-list"></div>
+
+    <script>
+    async function loadHotels() {
+      const sortBy = document.getElementById('sort-by').value;
+      const res = await fetch('/api/hotels?sort=' + sortBy);
+      const hotels = await res.json();
+      const container = document.getElementById('hotel-list');
+      container.innerHTML = hotels.map(h => `
+        <div class="hotel-card">
+          <img src="${h.image || '/static/images/default.jpg'}" alt="${h.name}" width="200"/>
+          <h3>${h.name}</h3>
+          <p>Địa điểm: ${h.location}</p>
+          <p>Giá: $${h.price}</p>
+          <p>Số sao: ${h.rating}</p>
+        </div>
+      `).join('');
+    }
+
+    document.getElementById('sort-by').addEventListener('change', loadHotels);
+    loadHotels();
+    </script>
+
 </body>
 </html>
+
 
