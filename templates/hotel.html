@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
@@ -18,16 +18,51 @@
             height: 250px;
             object-fit: cover;
         }
+        .sort-bar {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .sort-bar label {
+            margin-bottom: 0;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
     <div class="container py-4">
         <h1 class="mb-4">Danh sách khách sạn nổi bật</h1>
 
+        <!-- Sorting controls (client-side sort) -->
+        <div class="sort-bar">
+            <div>
+                <label for="sort-by">Sắp xếp theo:</label>
+                <select id="sort-by" class="form-select">
+                    <option value="">-- Không sắp xếp --</option>
+                    <option value="price-asc">Giá tăng dần</option>
+                    <option value="price-desc">Giá giảm dần</option>
+                    <option value="stars-asc">Số sao tăng dần</option>
+                    <option value="stars-desc">Số sao giảm dần</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="filter-city">Lọc theo thành phố (tùy chọn):</label>
+                <input id="filter-city" class="form-control" placeholder="Nhập tên thành phố để lọc">
+            </div>
+
+            <div>
+                <label for="reset-btn" style="visibility:hidden">reset</label>
+                <button id="reset-btn" class="btn btn-outline-secondary">Đặt lại</button>
+            </div>
+        </div>
+
         {% if hotels and hotels|length > 0 %}
-        <div class="row">
+        <div class="row" id="hotel-list">
             {% for hotel in hotels %}
-            <div class="col-md-4">
+            <div class="col-md-4 hotel-item" data-price="{{ hotel.price }}" data-stars="{{ hotel.stars }}" data-city="{{ hotel.city|lower }}">
                 <div class="hotel-card">
                     <img src="{{ hotel.image }}" alt="{{ hotel.name }}" class="hotel-img">
                     <div class="p-3">
@@ -44,5 +79,106 @@
         <p>Hiện chưa có khách sạn nào.</p>
         {% endif %}
     </div>
+
+    <script>
+        (function() {
+            // Utility: parse numeric value safely
+            function parseNumber(v) {
+                if (v === null || v === undefined) return NaN;
+                // If already number
+                if (typeof v === 'number') return v;
+                // Remove non-digit characters except dot and minus
+                var s = String(v).replace(/[^\d\.\-]/g, '');
+                var n = parseFloat(s);
+                return isNaN(n) ? NaN : n;
+            }
+
+            // Sort DOM elements inside container by data attribute
+            function sortDomBy(container, selector, dataAttr, asc) {
+                var parent = document.getElementById(container);
+                if (!parent) return;
+                var items = Array.prototype.slice.call(parent.querySelectorAll(selector));
+                items.sort(function(a, b) {
+                    var va = parseNumber(a.dataset[dataAttr]);
+                    var vb = parseNumber(b.dataset[dataAttr]);
+                    // Handle NaN: push NaN to end for asc, to start for desc
+                    if (isNaN(va) && isNaN(vb)) return 0;
+                    if (isNaN(va)) return asc ? 1 : -1;
+                    if (isNaN(vb)) return asc ? -1 : 1;
+                    return asc ? va - vb : vb - va;
+                });
+                // Re-append in sorted order
+                items.forEach(function(it) { parent.appendChild(it); });
+            }
+
+            // Filter DOM elements by city substring (case-insensitive)
+            function filterByCity(container, selector, citySubstr) {
+                var parent = document.getElementById(container);
+                if (!parent) return;
+                var items = Array.prototype.slice.call(parent.querySelectorAll(selector));
+                var q = citySubstr.trim().toLowerCase();
+                if (!q) {
+                    items.forEach(function(it) { it.style.display = ''; });
+                    return;
+                }
+                items.forEach(function(it) {
+                    var city = it.dataset.city || '';
+                    if (city.indexOf(q) !== -1) {
+                        it.style.display = '';
+                    } else {
+                        it.style.display = 'none';
+                    }
+                });
+            }
+
+            // Event handlers
+            var sortSelect = document.getElementById('sort-by');
+            var filterCityInput = document.getElementById('filter-city');
+            var resetBtn = document.getElementById('reset-btn');
+
+            function applySortAndFilter() {
+                var val = sortSelect.value;
+                if (val === 'price-asc') {
+                    sortDomBy('hotel-list', '.hotel-item', 'price', true);
+                } else if (val === 'price-desc') {
+                    sortDomBy('hotel-list', '.hotel-item', 'price', false);
+                } else if (val === 'stars-asc') {
+                    sortDomBy('hotel-list', '.hotel-item', 'stars', true);
+                } else if (val === 'stars-desc') {
+                    sortDomBy('hotel-list', '.hotel-item', 'stars', false);
+                } else {
+                    // No sort: keep original order — easiest approach is to reload page to restore server order
+                    // but to avoid reload, do nothing (current DOM order remains)
+                }
+                // Apply filter after sorting
+                filterByCity('hotel-list', '.hotel-item', filterCityInput.value || '');
+            }
+
+            sortSelect.addEventListener('change', function() {
+                applySortAndFilter();
+            });
+
+            filterCityInput.addEventListener('input', function() {
+                // Keep sorting stable when filtering
+                applySortAndFilter();
+            });
+
+            resetBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                sortSelect.value = '';
+                filterCityInput.value = '';
+                // To restore original server order, reload the page
+                // but to avoid full reload, we can simply remove inline display styles and not change order
+                var items = document.querySelectorAll('#hotel-list .hotel-item');
+                items.forEach(function(it) {
+                    it.style.display = '';
+                });
+                // Optionally, reload to restore original order:
+                // location.reload();
+            });
+
+            // Initial: no sort, no filter
+        })();
+    </script>
 </body>
 </html>
