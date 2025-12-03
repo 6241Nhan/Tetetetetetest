@@ -1,0 +1,53 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Xác nhận đặt phòng</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6;">
+
+    <h2 style="color:#1a73e8;">🎉 Xác nhận đặt phòng thành công!</h2>
+
+    <p>Xin chào <b>{{ info.user_name }}</b>,</p>
+
+    <p>
+        Bạn đã đặt phòng tại khách sạn
+        <b>{{ info.hotel_name }}</b> thành công.
+    </p>
+
+    <h3 style="margin-top:20px;">🔑 Mã đặt phòng của bạn</h3>
+    <div style="
+        font-size: 30px;
+        font-weight: bold;
+        color: #1d72f3;
+        padding: 10px 0;">
+        {{ info.booking_code }}
+    </div>
+
+    <p>
+        Vui lòng lưu lại mã này để:
+    </p>
+    <ul>
+        <li>Tra cứu đặt phòng trên website</li>
+        <li>Xuất trình nhanh khi nhận phòng</li>
+        <li>Xác minh thông tin đặt phòng</li>
+    </ul>
+
+    <hr style="margin: 25px 0;">
+
+    <h3>📄 Thông tin đặt phòng</h3>
+
+    <ul>
+        <li><b>Khách sạn:</b> {{ info.hotel_name }}</li>
+        <li><b>Loại phòng:</b> {{ info.room_type }}</li>
+        <li><b>Ngày nhận phòng:</b> {{ info.checkin_date }}</li>
+        <li><b>Người lớn:</b> {{ info.num_adults }}</li>
+        <li><b>Trẻ em:</b> {{ info.num_children }}</li>
+        <li><b>Giá:</b> {{ info.price }} VND</li>
+        <li><b>Ghi chú:</b> {{ info.special_requests }}</li>
+    </ul>
+
+    <p>Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi! ❤️</p>
+
+</body>
+</html>

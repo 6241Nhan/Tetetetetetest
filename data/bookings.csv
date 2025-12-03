@@ -1,7 +1,5 @@
-﻿hotel_name,room_type,price,user_name,phone,email,num_adults,num_children,checkin_date,nights,special_requests,booking_time,status,username,user_email
-Rex Hotel,Phòng nhỏ,300000.0,Do Khac Thanh Cong,348400827,ishoutokara@gmail.com,1,0,3059-09-23,1,,2025-11-24 19:17:23,Chờ xác nhận,IshoutoKara,
-Rex Hotel,Phòng nhỏ,300000.0,Do Khac Thanh Cong,348400827,ishoutokara@gmail.com,1,0,3059-09-23,1,,2025-11-24 19:20:32,Chờ xác nhận,IshoutoKara,
-Vinpearl Resort Nha Trang,Phòng tổng thống,1800000.0,Do Khac Thanh Cong,348400827,ishoutokara@gmail.com,1,0,2026-09-30,1,,2025-11-24 19:25:43,Chờ xác nhận,IshoutoKara,
-The Reverie Saigon,Phòng tổng thống,2500000.0,Do Khac Thanh Cong,348400827,ishoutokara@gmail.com,1,0,2050-10-31,1,,2025-11-24 19:27:12,Chờ xác nhận,IshoutoKara,
-Fusion Suites Danang,Phòng nhỏ,1100000.0,Do Khac Thanh Cong,348400827,ishoutokara@gmail.com,1,0,2055-09-23,1,,2025-11-24 19:31:12,Chờ xác nhận,IshoutoKara,
-Inter Continental Danang,Phòng nhỏ,2185000.0,Do Khac Thanh Cong,0348400827,ishoutokara@gmail.com,1,0,2090-02-22,1,,2025-11-24 19:34:52,Chờ xác nhận,IshoutoKara,
+﻿hotel_name,room_type,price,user_name,phone,email,num_adults,num_children,checkin_date,nights,special_requests,booking_time,status,username,user_email,booking_code
+Fusion Suites Danang,Phòng nhỏ,1100000.0,Do Khac Thanh Cong,348400827,ishoutokara@gmail.com,1,0,2026-09-23,1,,2025-11-29 17:30:08,Chờ xác nhận,IshoutoKara,,47624455
+Thanh Binh Motel,Phòng nhỏ,250000.0,Do Khac Thanh Cong,348400827,,1,0,2055-09-23,1,,2025-12-01 17:52:23,Chờ xác nhận,Khách vãng lai,,75597684
+Thanh Binh Motel,Phòng nhỏ,250000.0,Do Khac Thanh Cong,0987082010,ishoutokara@gmail.com,1,0,2045-08-20,1,,2025-12-01 17:55:28,Chờ xác nhận,Khách vãng lai,,81331048
+

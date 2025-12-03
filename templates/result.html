@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
@@ -161,7 +161,7 @@
             <div class="row align-items-center g-3">
                 <!-- Changed: exact stars selection (select) -->
                 <div class="col-md-2">
-                    <label class="form-label">⭐ Số sao chính xác</label>
+                    <label class="form-label">⭐ Số sao</label>
                     <select name="stars" id="stars-select" class="form-select">
                         <option value="">-- Tất cả --</option>
                         <option value="1" {% if request.args.get('stars') == '1' %}selected{% endif %}>1 sao</option>
@@ -181,7 +181,7 @@
 
                 <!-- Client-side sorting control (kept) -->
                 <div class="col-md-3">
-                    <label class="form-label">Sắp xếp nhanh (trên trang)</label>
+                    <label class="form-label">Sắp xếp nhanh</label>
                     <div class="sort-inline">
                         <select id="client-sort" class="form-select">
                             <option value="">-- Không --</option>

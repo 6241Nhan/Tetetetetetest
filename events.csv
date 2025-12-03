@@ -1,11 +1,12 @@
-event_id,event_name,city,lat,lon,start_date,end_date,season
-1,Music Festival,Hanoi,21.03,105.85,2025-03-12,2025-03-15,spring
-2,Beach Party,Da Nang,16.06,108.23,2025-07-10,2025-07-12,summer
-3,Flower Festival,Da Lat,11.94,108.45,2025-12-20,2025-12-25,winter
-4,Marathon,Nha Trang,12.25,109.19,2025-08-05,2025-08-06,summer
-5,Food Fair,Ho Chi Minh City,10.77,106.68,2025-09-01,2025-09-05,autumn
-6,Street Art Carnival,Ho Chi Minh City,10.78,106.70,2025-04-20,2025-04-22,spring
-7,Mid-Autumn Lantern Festival,Hanoi,21.03,105.84,2025-09-10,2025-09-12,autumn
-8,Sea Tourism Week,Nha Trang,12.23,109.20,2025-06-15,2025-06-20,summer
-9,Fireworks Festival,Da Nang,16.05,108.22,2025-06-01,2025-06-02,summer
-10,Tet Flower Market,Ho Chi Minh City,10.77,106.69,2025-01-25,2025-01-31,winter
+event_id,event_name,city,lat,lon,start_date,end_date,season, image_path
+1,Music Festival,Hanoi,21.03,105.85,2025-03-12,2025-03-15,spring, https://cdn-images.vtv.vn/562122370168008704/2023/10/23/231023-monsoon-1-169802583702571358817.png; https://macmedia.vn/media/12329/pvei7pj.jpg	
+2,Beach Party,Da Nang,16.06,108.23,2025-07-10,2025-07-12,summer, https://danangfantasticity.com/wp-content/uploads/2025/04/tiec-bai-bien-hang-tuan-tai-holiday-beach-club-bua-tiec-khong-the-bo-lo-01.jpg; https://danangfantasticity.com/wp-content/uploads/2025/04/tiec-bai-bien-hang-tuan-tai-holiday-beach-club-bua-tiec-khong-the-bo-lo-03.jpg
+3,Flower Festival,Da Lat,11.94,108.45,2025-12-20,2025-12-25,winter, https://mia.vn/media/uploads/blog-du-lich/festival-hoa-da-lat-tat-tan-tat-ve-le-hoi-hoa-lon-nhat-tai-da-lat-04-1635691106.jpeg; https://lilystravelagency.com/wp-content/uploads/2025/01/dalat-flower-festival3.png; https://media.vov.vn/sites/default/files/styles/large/public/2024-12/469301405_990274743130379_511004.jpg  
+4,Marathon,Nha Trang,12.25,109.19,2025-08-05,2025-08-06,summer, https://wmimg.azureedge.net/public/img/marathons/nha-trang-marathon/4JpRBH3_nha-trang-marathon.jpg?c=1745467469; 
+5,Food Fair,Ho Chi Minh City,10.77,106.68,2025-09-01,2025-09-05,autumn, https://vstatic.vietnam.vn/vietnam/resource/IMAGE/2025/10/31/1761918206336_anh-man-hinh-2025-10-31-luc-194354-17619162879351302171544.png; https://vstatic.vietnam.vn/vietnam/resource/IMAGE/2025/10/31/1761918207234_anh-man-hinh-2025-10-31-luc-194407-1761916288708942836260.png; 
+6,Street Art Carnival,Ho Chi Minh City,10.78,106.70,2025-04-20,2025-04-22,spring, https://vagabundler.com/wp-content/uploads/2023/09/namjam111-2000x1152.jpg; https://images2.thanhnien.vn/528068263637045248/2024/11/4/photo-1730732211519-17307322127802011068395.jpeg; https://media.urbanistnetwork.com/urbanistvietnam/articleimages/2021/11/25/tanlucgraffiti/tanlucgraffiti3b.jpg
+7,Mid-Autumn Lantern Festival,Hanoi,21.03,105.84,2025-09-10,2025-09-12,autumn, https://www.vietnambooking.com/wp-content/uploads/2023/09/pho-long-den-phung-hung-ha-noi-4.jpg; https://cdn-media.hanoitimes.vn/resources2025/1/users/196/hang-ma/hang-ma-street-11-1758010752-webp-1758010805.webp; 
+8,Sea Tourism Week,Nha Trang,12.23,109.20,2025-06-15,2025-06-20,summer, https://www.flamingotravels.co.in/blog/wp-content/uploads/2023/08/Nha-Trang.png; https://phuquocexpress.com/wp-content/uploads/2023/08/mua-ve-tau-cao-toc-di-lang-chai-nha-trang-ngam-hoang-hon-1024x528.jpg.webp; https://images.squarespace-cdn.com/content/v1/524b5395e4b0ad97e93a5b0f/c408ec81-6b03-4687-861a-c9f4d7cda8e4/NDA-NTCP%2B%281%29.jpg
+9,Fireworks Festival,Da Nang,16.05,108.22,2025-06-01,2025-06-02,summer, https://diff.vn/wp-content/uploads/2025/03/lich-phao-hoa-da-nang-2025-featured.png; https://diff.vn/wp-content/uploads/2025/05/image2-1-1.jpg
+10,Tet Flower Market,Ho Chi Minh City,10.77,106.69,2025-01-25,2025-01-31,winter, https://images.hcmcpv.org.vn/res/news/2025/01/02-01-2025-nhieu-net-dac-sac-duong-hoa-nguyen-hue-tet-at-ty-nam-2025-4E1D974B.jpg; https://images.hcmcpv.org.vn//Uploads/Image/2812202382C0C63C/28-12-2023DuonghoaNH_28.jpg
+
