@@ -9,7 +9,8 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from flask_mail import Mail, Message   # nếu dùng mail
 from werkzeug.security import generate_password_hash, check_password_hash
 import google.generativeai as genai
-
+# --- add near other imports at the top ---
+from modules.availability import decrement_room_availability
 # -------------------------
 # Tạo app Flask
 # -------------------------
@@ -223,6 +224,17 @@ def book(hotel_name, price):
     flash(f"Đặt phòng {hotel_name} thành công! Giá: {price} VND", "success")
     return redirect(url_for("index"))
 
+    # --- after saving bookings to BOOKINGS_CSV (inside booking POST) ---
+df = pd.concat([df, pd.DataFrame([info])], ignore_index=True)
+df.to_csv(BOOKINGS_CSV, index=False, encoding='utf-8-sig')
+
+# --- decrement rooms_available in hotels.csv atomically ---
+try:
+    new_rooms = decrement_room_availability(HOTELS_CSV, name, decrement=1)
+    app.logger.info(f"Decremented rooms_available for '{name}' -> now {new_rooms}")
+except Exception as e:
+    # Log but continue booking flow (so bookings are not blocked by availability write errors)
+    app.logger.warning(f"Failed to decrement rooms_available for '{name}': {e}")
 # ========================================
 
 
@@ -1659,6 +1671,7 @@ def google_search(query):
 # === KHỞI CHẠY APP ===
 if __name__ == '__main__':
     app.run(debug=True)
+
 
 
 
