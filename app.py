@@ -2,15 +2,16 @@ import os
 import re
 import ast
 import tempfile
-import random
 from datetime import datetime
 import pandas as pd
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_mail import Mail, Message   # nếu dùng mail
 from werkzeug.security import generate_password_hash, check_password_hash
 import google.generativeai as genai
-# --- add near other imports at the top ---
+
+# Import availability helper (decrement room counts)
 from modules.availability import decrement_room_availability
+
 # -------------------------
 # Tạo app Flask
 # -------------------------
@@ -43,8 +44,6 @@ def get_discounted_price(rank, base_price):
     discount = {"Đồng": 0, "Bạc": 0.05, "Vàng": 0.1, "Bạch kim": 0.2}
     return int(base_price * (1 - discount.get(rank, 0)))
 
-def generate_booking_code():
-    return str(random.randint(10000000, 99999999))
 # -------------------------
 # HỖ TRỢ USER CSV
 # -------------------------
@@ -224,17 +223,6 @@ def book(hotel_name, price):
     flash(f"Đặt phòng {hotel_name} thành công! Giá: {price} VND", "success")
     return redirect(url_for("index"))
 
-    # --- after saving bookings to BOOKINGS_CSV (inside booking POST) ---
-df = pd.concat([df, pd.DataFrame([info])], ignore_index=True)
-df.to_csv(BOOKINGS_CSV, index=False, encoding='utf-8-sig')
-
-# --- decrement rooms_available in hotels.csv atomically ---
-try:
-    new_rooms = decrement_room_availability(HOTELS_CSV, name, decrement=1)
-    app.logger.info(f"Decremented rooms_available for '{name}' -> now {new_rooms}")
-except Exception as e:
-    # Log but continue booking flow (so bookings are not blocked by availability write errors)
-    app.logger.warning(f"Failed to decrement rooms_available for '{name}': {e}")
 # ========================================
 
 
@@ -601,7 +589,6 @@ def add_review(name):
 
 # === TRANG ĐẶT PHÒNG ===
 @app.route('/booking/<name>/<room_type>', methods=['GET', 'POST'])
-@app.route('/booking/<name>/<room_type>', methods=['GET', 'POST'])
 def booking(name, room_type):
     hotels_df = read_csv_safe(HOTELS_CSV)
     hotels_df['rooms_available'] = hotels_df.get('rooms_available', 0).astype(int)
@@ -616,87 +603,75 @@ def booking(name, room_type):
     is_available = hotel['status'].lower() == 'còn'
     flash(f"Trạng thái phòng hiện tại: {hotel['status']}", "info")
 
-    # Lấy rank & giá giảm
+    # ✅ LẤY RANK & TÍNH GIÁ GIẢM CHO CẢ GET + POST
     user_rank = session.get('user', {}).get('rank', 'Đồng')
     base_price = float(hotel.get('price', 0))
     discounted_price = get_discounted_price(user_rank, base_price)
 
     if request.method == 'POST':
-        # Lấy thông tin người đặt
-        username = session.get('user', {}).get('username', 'Khách vãng lai')
-        email = request.form.get('email', '').strip()  # email từ form, bắt buộc điền nếu chưa đăng nhập
-        fullname = request.form['fullname'].strip()
-        phone = request.form['phone'].strip()
-        num_adults = max(int(request.form.get('adults', 1)), 1)
-        num_children = max(int(request.form.get('children', 0)), 0)
-        checkin = request.form['checkin']
-        note = request.form.get('note', '').strip()
+        user_rank = session['user'].get('rank', 'Đồng')
+        discounted_price = get_discounted_price(user_rank, hotel.get('price', 0))
 
         info = {
-            "username": username,
+            "username": session['user']['username'],
             "hotel_name": name,
             "room_type": room_type,
             "price": float(request.form.get('price', discounted_price)),
-            "user_name": fullname,
-            "phone": phone,
-            "email": email,
-            "num_adults": num_adults,
-            "num_children": num_children,
-            "checkin_date": checkin,
+            "user_name": request.form['fullname'].strip(),
+            "phone": request.form['phone'].strip(),
+            "email": session['user']['email'],
+            "num_adults": max(int(request.form.get('adults', 1)), 1),
+            "num_children": max(int(request.form.get('children', 0)), 0),
+            "checkin_date": request.form['checkin'],
             "nights": 1,
-            "special_requests": note,
+            "special_requests": request.form.get('note', '').strip(),
             "booking_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "status": "Chờ xác nhận",
-            "booking_code": generate_booking_code()
+            "status": "Chờ xác nhận"
         }
 
-        # Lưu booking vào CSV
+        # --- 1. Lưu booking vào CSV ---
         try:
             df = pd.read_csv(BOOKINGS_CSV, encoding="utf-8-sig")
         except FileNotFoundError:
             df = pd.DataFrame(columns=info.keys())
         df = pd.concat([df, pd.DataFrame([info])], ignore_index=True)
-        df.to_csv(BOOKINGS_CSV, index=False, encoding="utf-8-sig")
+        df.to_csv(BOOKINGS_CSV, index=False, encoding='utf-8-sig')
 
-        # Cập nhật user session & total_spent nếu đăng nhập
-        if "user" in session:
-            if username in users_db:
-                users_db[username]['total_spent'] += info['price']
-                save_users(users_db)
-                session['user']['rank'] = get_user_rank(users_db[username]['total_spent'])
-
-        # Gửi email cho khách nếu có
-        if email:
-            try:
-                msg_user = Message(
-                    subject="Xác nhận đặt phòng - Hotel Pinder",
-                    recipients=[email]
-                )
-                msg_user.html = render_template("msg_user.html", info=info)
-                mail.send(msg_user)
-            except Exception as e:
-                print(f"Lỗi gửi email cho khách: {e}")
-
-        # Gửi email cho admin
+        # --- decrement rooms_available in hotels.csv atomically ---
         try:
-            msg_admin = Message(
-                subject=f"Đơn đặt phòng mới tại {info['hotel_name']}",
-                recipients=["hotelpinder@gmail.com"]
-            )
-            msg_admin.html = f"""
-                <h3>Đơn đặt phòng mới</h3>
-                <p>Khách sạn: {info['hotel_name']}</p>
-                <p>Người đặt: {info['user_name']}</p>
-                <p>Email: {info['email']}</p>
-                <p>SĐT: {info['phone']}</p>
-                <p>Phòng: {info['room_type']}</p>
-                <p>Ngày nhận: {info['checkin_date']}</p>
-                <p>Số đêm: {info['nights']}</p>
-                <p>Người lớn: {info['num_adults']} | Trẻ em: {info['num_children']}</p>
-                <p>Ghi chú: {info['special_requests']}</p>
-                <p>Giá: {info['price']}</p>
-                <p>Mã đặt phòng: {info['booking_code']}</p>
-            """
+            new_rooms = decrement_room_availability(HOTELS_CSV, name, decrement=1)
+            app.logger.info(f"Decremented rooms_available for '{name}' -> now {new_rooms}")
+        except Exception as e:
+            # Log but continue booking flow (so bookings are not blocked by availability write errors)
+            app.logger.warning(f"Failed to decrement rooms_available for '{name}': {e}")
+
+        # --- 2. Cập nhật tổng chi tiêu và history trong users_db + users.csv ---
+        username = session['user']['username']
+        if username in users_db:
+            users_db[username]['total_spent'] += info['price']
+            users_db[username]['history'].append(info)
+
+            # Cập nhật CSV users
+            df_users = pd.DataFrame(users_db).T
+            df_users.to_csv(USERS_CSV, index_label='username', encoding='utf-8-sig')
+
+            # Cập nhật session rank ngay lập tức
+            session['user']['rank'] = get_user_rank(users_db[username]['total_spent'])
+
+        # --- 3. Gửi email ---
+        try:
+            if info["email"]:
+                msg_user = Message(subject="Xác nhận đặt phòng - Hotel Pinder",
+                                   recipients=[info["email"]])
+                msg_user.html = f"""..."""
+                mail.send(msg_user)
+        except Exception as e:
+            print(f"Lỗi gửi email cho khách: {e}")
+
+        try:
+            msg_admin = Message(subject=f"Đơn đặt phòng mới tại {info['hotel_name']}",
+                                recipients=["hotelpinder@gmail.com"])
+            msg_admin.html = f"""..."""
             mail.send(msg_admin)
         except Exception as e:
             print(f"Lỗi gửi email admin: {e}")
@@ -706,7 +681,7 @@ def booking(name, room_type):
 
     # GET request, hiển thị form booking
     return render_template('booking.html', hotel=hotel, room_type=room_type, 
-                           is_available=is_available, discounted_price=discounted_price)
+                       is_available=is_available, discounted_price=discounted_price)
 
 # === LỊCH SỬ ĐẶT PHÒNG ===
 @app.route("/history")
@@ -801,7 +776,6 @@ def admin_hotels():
     df['rooms_available'] = pd.to_numeric(df['rooms_available'], errors='coerce').fillna(0).astype(int)
     df['status'] = df['rooms_available'].apply(lambda x: 'còn' if x > 0 else 'hết')
     df.to_csv(HOTELS_CSV, index=False, encoding='utf-8-sig')
-
 
     # --- Thêm khách sạn mới ---
     if request.method == 'POST' and 'name' in request.form and 'add_hotel' not in request.form:
@@ -942,7 +916,6 @@ def update_hotel_status(name, status):
     except Exception as e:
         flash(f"Lỗi khi cập nhật trạng thái: {e}", "danger")
     return redirect(url_for('admin_hotels'))
-
 
 # ------------------------
 # CẤU HÌNH GEMINI API
@@ -1428,7 +1401,7 @@ def smart_hotel_filtering_with_city_constraint(hotels_data, reviews_data, user_q
     
     if scored_hotels:
         result = scored_hotels[:3]
-        print(f"🏨 Final filtered hotels: {[f'{h['name']} ({h.get('city', 'Unknown')}) - {h.get('match_score', 0):.1f}' for h in result]}")
+        print(f"🏨 Final filtered hotels: {[f\"{h['name']} ({h.get('city', 'Unknown')}) - {h.get('match_score', 0):.1f}\" for h in result]}")
         return result
     
     print("❌ No hotels matched the criteria")
@@ -1566,7 +1539,7 @@ def smart_hotel_filtering_with_city_constraint(hotels_data, reviews_data, user_q
     
     if scored_hotels:
         result = scored_hotels[:3]
-        print(f"🏨 Final filtered hotels: {[f'{h['name']} ({h.get('city', 'Unknown')}) - {h.get('match_score', 0):.1f}' for h in result]}")
+        print(f"🏨 Final filtered hotels: {[f\"{h['name']} ({h.get('city', 'Unknown')}) - {h.get('match_score', 0):.1f}\" for h in result]}")
         return result
     
     print("❌ No hotels matched the criteria")
@@ -1671,7 +1644,3 @@ def google_search(query):
 # === KHỞI CHẠY APP ===
 if __name__ == '__main__':
     app.run(debug=True)
-
-
-
-
