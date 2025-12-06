@@ -63,9 +63,9 @@ def _match_rows(df, hotel_name):
     # Partial match fallback (contains)
     if not candidates.any():
         if 'name' in df.columns:
-            candidates = candidates | (df['name'].astype(str).str.strip().str.lower().str.contains(hotel_name.lower()))
+            candidates = candidates | (df['name'].astype(str).str.strip().str.lower().str.contains(hotel_name.lower(), na=False))
         if 'hotel_name' in df.columns:
-            candidates = candidates | (df['hotel_name'].astype(str).str.strip().str.lower().str.contains(hotel_name.lower()))
+            candidates = candidates | (df['hotel_name'].astype(str).str.strip().str.lower().str.contains(hotel_name.lower(), na=False))
 
     return candidates
 
