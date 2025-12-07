@@ -74,7 +74,6 @@
                 border-radius: 15px;
             }
 
-        /* ❤️ Nút yêu thích */
         .favorite-btn {
             background: none;
             border: none;
@@ -89,7 +88,6 @@
                 transform: scale(1.2);
             }
 
-        /* 💰 Bảng giá theo mùa */
         .price-table {
             width: 100%;
             border-collapse: collapse;
@@ -112,61 +110,6 @@
             .price-table tr:hover {
                 background: #f8f9fa;
             }
-
-        /* 🖼️ Carousel thumbnails */
-        .carousel-thumbnails {
-            overflow-x: auto;
-            padding: 5px 0;
-            display: flex;
-            justify-content: center;
-            gap: 5px;
-        }
-
-            .carousel-thumbnails .thumb-img {
-                width: 80px;
-                height: 50px;
-                object-fit: cover;
-                border-radius: 5px;
-                cursor: pointer;
-                opacity: 0.7;
-                transition: all 0.3s;
-            }
-
-                .carousel-thumbnails .thumb-img:hover {
-                    opacity: 1;
-                    transform: scale(1.05);
-                }
-
-        /* Popup ảnh lớn */
-        #imgModal {
-            display: none;
-            position: fixed;
-            z-index: 1050;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.8);
-        }
-
-            #imgModal img {
-                margin: 5% auto;
-                display: block;
-                max-width: 90%;
-                max-height: 80%;
-                border-radius: 10px;
-            }
-
-            #imgModal span {
-                position: absolute;
-                top: 20px;
-                right: 35px;
-                color: #fff;
-                font-size: 40px;
-                font-weight: bold;
-                cursor: pointer;
-            }
     </style>
 </head>
 <body>
@@ -186,7 +129,7 @@
                 <h4 class="text-danger fw-bold">{{ hotel.price }}₫ / đêm</h4>
                 <p>{{ hotel.full_desc | safe }}</p>
 
-                <!-- 🖼️ Bộ sưu tập hình ảnh (Carousel) -->
+                <!-- 🖼️ Bộ sưu tập hình ảnh khách sạn -->
                 <h4 class="text-primary mb-3">Bộ sưu tập hình ảnh</h4>
                 <div id="hotelCarousel" class="carousel slide shadow-lg rounded-4 overflow-hidden mb-2" data-bs-ride="carousel">
                     <div class="carousel-indicators">
@@ -211,13 +154,6 @@
                     </button>
                 </div>
 
-                <!-- Thumbnails dưới carousel -->
-                <div class="carousel-thumbnails mb-4">
-                    {% for img in hotel.gallery %}
-                    <img src="{{ img }}" class="thumb-img" data-bs-target="#hotelCarousel" data-bs-slide-to="{{ loop.index0 }}">
-                    {% endfor %}
-                </div>
-
                 <!-- 🗺️ Bản đồ -->
                 <h5 class="mt-4 mb-3 text-primary fw-semibold">📍 Vị trí trên bản đồ</h5>
                 <div class="map-container mb-4">
@@ -226,6 +162,26 @@
                             src="https://www.google.com/maps?q={{ hotel.name | urlencode }}+{{ hotel.city | urlencode }}&output=embed">
                     </iframe>
                 </div>
+
+                <!-- 🎉 Ảnh sự kiện -->
+                {% if hotel.event_image_url or hotel.event_description %}
+                <div class="mt-4" style="border-radius:10px; overflow:hidden; background:#fff7e6;">
+
+                    {% if hotel.event_image_url %}
+                    <img src="{{ hotel.event_image_url }}"
+                         alt="Ảnh event"
+                         style="width:100%; max-height:600px; object-fit:cover;">
+                    {% endif %}
+
+                    {% if hotel.event_description %}
+                    <div style="padding:15px; font-size:16px;">
+                        <h4 class="text-primary mb-2">Sự kiện đặc biệt</h4>
+                        <p>{{ hotel.event_description }}</p>
+                    </div>
+                    {% endif %}
+
+                </div>
+                {% endif %}
 
                 <h5 class="mt-3">Tiện nghi nổi bật:</h5>
                 <div class="feature-list">
@@ -333,64 +289,35 @@
 
     </div>
 
-    <!-- Popup ảnh lớn -->
-    <div id="imgModal">
-        <span id="closeModal">&times;</span>
-        <img id="modalImg" src="">
-    </div>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Toggle form đánh giá
         document.getElementById("toggleReviewBtn").addEventListener("click", function () {
-            const f = document.getElementById("reviewForm");
-            f.style.display = f.style.display === "none" ? "block" : "none";
+        const f = document.getElementById("reviewForm");
+        f.style.display = f.style.display === "none" ? "block" : "none";
         });
 
         // ❤️ Nút yêu thích
         const favBtn = document.getElementById("favBtn");
         favBtn.addEventListener("click", () => {
-            if (favBtn.textContent === "♡") {
-                favBtn.textContent = "❤️";
-                alert("Đã thêm khách sạn vào danh sách yêu thích!");
-            } else {
-                favBtn.textContent = "♡";
-                alert("Đã bỏ khỏi danh sách yêu thích!");
-            }
+        if (favBtn.textContent === "♡") {
+        favBtn.textContent = "❤️";
+        alert("Đã thêm khách sạn vào danh sách yêu thích!");
+        } else {
+        favBtn.textContent = "♡";
+        alert("Đã bỏ khỏi danh sách yêu thích!");
+        }
         });
 
         // Tự động trượt carousel
         const carousel = document.querySelector('#hotelCarousel');
         if (carousel) {
-            const bsCarousel = new bootstrap.Carousel(carousel, {
-                interval: 3000,
-                ride: 'carousel'
-            });
+        const bsCarousel = new bootstrap.Carousel(carousel, {
+        interval: 3000,
+        ride: 'carousel'
+        });
         }
-
-        // Thumbnails dưới carousel
-        document.querySelectorAll('.carousel-thumbnails .thumb-img').forEach((thumb, idx) => {
-            thumb.addEventListener('click', () => {
-                const carouselEl = document.querySelector('#hotelCarousel');
-                const carousel = bootstrap.Carousel.getOrCreateInstance(carouselEl);
-                carousel.to(idx);
-            });
-        });
-
-        // Popup ảnh lớn
-        const modal = document.getElementById("imgModal");
-        const modalImg = document.getElementById("modalImg");
-        const closeModal = document.getElementById("closeModal");
-
-        document.querySelectorAll('#hotelCarousel .carousel-item img').forEach(img => {
-            img.addEventListener('click', () => {
-                modal.style.display = "block";
-                modalImg.src = img.src;
-            });
-        });
-
-        closeModal.onclick = function () { modal.style.display = "none"; }
-        window.onclick = function (event) { if (event.target == modal) modal.style.display = "none"; }
     </script>
 </body>
 </html>
+

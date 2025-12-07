@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Sự Kiện Đặc Biệt - Vòng Quay Tử Thần</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        .event-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            margin-top: 30px;
+            margin-bottom: 30px;
+        }
+        .event-header {
+            background: linear-gradient(45deg, #ff6b6b, #ff8e53);
+            color: white;
+            padding: 30px;
+            border-radius: 20px 20px 0 0;
+            text-align: center;
+        }
+        .prize-item {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            transition: all 0.3s ease;
+        }
+        .prize-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .wheel-container {
+            position: relative;
+            width: 420px;
+            height: 420px;
+            margin: 0 auto;
+        }
+        .wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(
+                /* KHỚP VỚI SERVER - Ô 0 đến Ô 6 */
+                #ff6b6b 0deg 51.43deg,           /* Ô 0: May mắn lần sau (40%) */
+                #4ecdc4 51.43deg 102.86deg,      /* Ô 1: May mắn lần sau (25%) */
+                #45b7d1 102.86deg 154.29deg,     /* Ô 2: May mắn lần sau (15%) */
+                #96ceb4 154.29deg 205.72deg,     /* Ô 3: 50K VNĐ (10%) */
+                #f7dc6f 205.72deg 257.15deg,     /* Ô 4: 100K VNĐ (5%) */
+                #f8c471 257.15deg 308.58deg,     /* Ô 5: 200K VNĐ (3%) */
+                #9b59b6 308.58deg 360deg         /* Ô 6: 500K VNĐ (2%) */
+            );
+            position: relative;
+            border: 10px solid #ffd700;
+            box-shadow: 
+                inset 0 0 20px rgba(0,0,0,0.2),
+                0 0 25px rgba(0,0,0,0.4);
+            transform-origin: center;
+            will-change: transform;
+            backface-visibility: hidden;
+            transition: transform 4.5s cubic-bezier(0.25, 0.1, 0.25, 1);
+            transform: rotate(0deg);
+        }
+        .wheel-pointer {
+            position: absolute;
+            top: -35px;
+            left: 50%;
+            transform: translateX(-50%) rotate(180deg);
+            width: 40px;
+            height: 50px;
+            background: linear-gradient(45deg, #ff6b6b, #ff8e53);
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+            z-index: 10;
+            filter: drop-shadow(0 5px 8px rgba(0,0,0,0.4));
+            border-radius: 3px;
+        }
+        .prize-label {
+            position: absolute;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            transform-origin: center;
+            text-align: center;
+            width: 90px;
+            pointer-events: none;
+            user-select: none;
+            left: 50%;
+            top: 50%;
+            white-space: nowrap;
+        }
+        .prize-label.special {
+            color: #ffd700;
+            font-size: 11px;
+            font-weight: 600;
+            width: 100px;
+        }
+        .participate-btn {
+            background: linear-gradient(45deg, #ff6b6b, #ff8e53);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            color: white;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .participate-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+        .participate-btn:disabled {
+            background: #6c757d;
+            transform: none;
+            box-shadow: none;
+        }
+        .event-banner {
+            background: linear-gradient(90deg, #ff6b6b, #ff8e53, #ff6b6b);
+            background-size: 200% 100%;
+            animation: gradientShift 3s ease infinite;
+            padding: 15px 0;
+            border-bottom: 3px solid #ffd700;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+        }
+        @keyframes gradientShift {
+            0% { background-position: 200% 0%; }
+            50% { background-position: 0% 0%; }
+            100% { background-position: 200% 0%; }
+        }
+        .status-card {
+            border-left: 5px solid #007bff;
+        }
+        .status-card.eligible {
+            border-left-color: #28a745;
+        }
+        .status-card.not-eligible {
+            border-left-color: #dc3545;
+        }
+        .status-card.ended {
+            border-left-color: #6c757d;
+        }
+        .spin-count {
+            font-size: 14px;
+            color: #6c757d;
+            margin-top: 10px;
+        }
+        .result-animation {
+            animation: resultPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes resultPop {
+            0% { 
+                transform: scale(0.3); 
+                opacity: 0; 
+            }
+            70% { 
+                transform: scale(1.1); 
+            }
+            100% { 
+                transform: scale(1); 
+                opacity: 1; 
+            }
+        }
+        .center-dot {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            background: #ffd700;
+            border-radius: 50%;
+            border: 5px solid white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+            z-index: 5;
+        }
+        .debug-info {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+            min-height: 20px;
+        }
+        .prize-visual-guide {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        .prize-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 1px solid #666;
+            cursor: help;
+        }
+        .prize-dot.active {
+            transform: scale(1.5);
+            box-shadow: 0 0 8px #ff0000;
+            z-index: 2;
+        }
+        .login-required {
+            text-align: center;
+            padding: 40px;
+        }
+        .login-required h3 {
+            margin-bottom: 20px;
+            color: #ff6b6b;
+        }
+    </style>
+</head>
+<body>
+    <div class="event-banner">
+        <div class="container">
+            🎉 THAM GIA SỰ KIỆN ĐẶC BIỆT - VÒNG QUAY TỬ THẦN 🎉
+        </div>
+    </div>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <img src="https://cdn-icons-png.flaticon.com/512/2331/2331941.png" alt="Logo" width="32" class="me-2">
+                Smart Hotel Finder
+            </a>
+            <a href="/" class="btn btn-outline-light">← Quay lại Trang chủ</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="event-container">
+            <div class="event-header">
+                <h1>🎯 Vòng Quay Tử Thần 🎯</h1>
+                <p class="lead">Tham gia ngay để nhận những phần quà hấp dẫn!</p>
+                <div class="event-timer">
+                    <small>Thời gian sự kiện: 01/08 - 31/12 hàng năm</small>
+                </div>
+            </div>
+
+            <div class="p-4">
+                <div id="event-status" class="mb-4">
+                    <!-- Status sẽ được cập nhật bằng JavaScript -->
+                    <div class="card status-card">
+                        <div class="card-body">
+                            <h5 class="card-title">Đang kiểm tra...</h5>
+                            <p class="card-text">Vui lòng đăng nhập để tham gia</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nút tham gia - sẽ được cập nhật -->
+                <div class="text-center mb-4" id="action-button-container">
+                    <button id="start-wheel" class="btn participate-btn" disabled>
+                        🔒 Đăng nhập để tham gia
+                    </button>
+                </div>
+
+                <!-- Nội dung chính -->
+                <div class="row">
+                    <!-- Thông tin sự kiện - NỘI QUY ĐÃ CẬP NHẬT -->
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header bg-danger text-white">
+                                <h5 class="mb-0">📋 Nội Quy Tham Gia</h5>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item">
+                                        🔒 <strong>BẮT BUỘC: Đăng nhập để tham gia</strong>
+                                    </li>
+                                    <li class="list-group-item">
+                                        🎁 <strong>TẶNG NGAY: Mỗi tài khoản được 1 lượt quay miễn phí ban đầu</strong>
+                                    </li>
+                                    <li class="list-group-item">
+                                        📊 <strong>Tổng chi tiêu được tính từ 01/08 đến 31/12 hàng năm</strong>
+                                    </li>
+                                    <li class="list-group-item">
+                                        💎 <strong>Thêm lượt quay theo hạng thành viên:</strong>
+                                        <br>
+                                        <small class="text-muted">
+                                            • Đồng: +1 lượt<br>
+                                            • Bạc: +2 lượt<br>
+                                            • Vàng: +3 lượt<br>
+                                            • Bạch Kim: +4 lượt
+                                        </small>
+                                    </li>
+                                    <li class="list-group-item">
+                                        💰 Mốc 1: 500,000 VNĐ → +1 lượt quay
+                                    </li>
+                                    <li class="list-group-item">
+                                        💰 Mốc 2: 1,000,000 VNĐ → +2 lượt quay
+                                    </li>
+                                    <li class="list-group-item">
+                                        💰 Mốc 3: 2,000,000 VNĐ → +3 lượt quay
+                                    </li>
+                                    <li class="list-group-item">
+                                        💰 Mốc 4: 3,500,000 VNĐ → +4 lượt quay
+                                    </li>
+                                    <li class="list-group-item">
+                                        💰 Mốc 5: 5,000,000 VNĐ → +5 lượt quay (tối đa từ chi tiêu)
+                                    </li>
+                                    <li class="list-group-item">
+                                        💸 <strong>Giải thưởng sẽ được cộng TRỰC TIẾP vào tổng chi tiêu</strong>
+                                    </li>
+                                    <li class="list-group-item">
+                                        📈 <strong>Giải thưởng giúp tăng rank nhanh hơn, nhận thêm lượt quay tiếp theo</strong>
+                                    </li>
+                                </ul>
+                                <div class="alert alert-info mt-3">
+                                    <strong>ℹ️ Công thức tính lượt quay:</strong><br>
+                                    Tổng lượt = 1 lượt miễn phí + Lượt từ chi tiêu + Lượt từ hạng thành viên
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Giải thưởng -->
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0">🏆 Giải Thưởng</h5>
+                            </div>
+                            <div class="card-body">
+                                <!-- KHỚP VỚI SERVER - Ô 0-6 -->
+                                <div class="prize-item">
+                                    <strong>Ô 1: Chúc bạn may mắn lần sau</strong>
+                                    <span class="badge bg-secondary float-end">40%</span>
+                                </div>
+                                <div class="prize-item">
+                                    <strong>Ô 2: Chúc bạn may mắn lần sau</strong>
+                                    <span class="badge bg-secondary float-end">25%</span>
+                                </div>
+                                <div class="prize-item">
+                                    <strong>Ô 3: Chúc bạn may mắn lần sau</strong>
+                                    <span class="badge bg-secondary float-end">15%</span>
+                                </div>
+                                <div class="prize-item">
+                                    <strong>Ô 4: 50,000 VNĐ</strong>
+                                    <span class="badge bg-primary float-end">10%</span>
+                                    <small class="text-success d-block mt-1">💸 Được cộng vào tổng chi tiêu</small>
+                                </div>
+                                <div class="prize-item">
+                                    <strong>Ô 5: 100,000 VNĐ</strong>
+                                    <span class="badge bg-info float-end">5%</span>
+                                    <small class="text-success d-block mt-1">💸 Được cộng vào tổng chi tiêu</small>
+                                </div>
+                                <div class="prize-item">
+                                    <strong>Ô 6: 200,000 VNĐ</strong>
+                                    <span class="badge bg-warning float-end">3%</span>
+                                    <small class="text-success d-block mt-1">💸 Được cộng vào tổng chi tiêu</small>
+                                </div>
+                                <div class="prize-item">
+                                    <strong>Ô 7: 500,000 VNĐ</strong>
+                                    <span class="badge bg-danger float-end">2%</span>
+                                    <small class="text-success d-block mt-1">💸 Được cộng vào tổng chi tiêu</small>
+                                </div>
+                                <div class="alert alert-warning mt-3">
+                                    <strong>💰 Giải thưởng tiền mặt sẽ được cộng TRỰC TIẾP vào tổng chi tiêu của bạn, giúp:</strong>
+                                    <ul class="mb-0 mt-1">
+                                        <li>📈 Tăng hạng thành viên nhanh hơn</li>
+                                        <li>🎁 Nhận thêm lượt quay từ các mốc mới</li>
+                                        <li>✨ Hưởng ưu đãi tốt hơn</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Thông tin chi tiết lượt quay (sẽ được cập nhật bằng JS) -->
+                <div class="card mb-4" id="spin-details" style="display: none;">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">🎯 Thông tin lượt quay của bạn</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <table class="table table-sm">
+                                    <tr>
+                                        <th>👤 Tài khoản:</th>
+                                        <td id="user-username">-</td>
+                                    </tr>
+                                    <tr>
+                                        <th>💎 Hạng thành viên:</th>
+                                        <td><span id="user-rank" class="badge bg-info">-</span></td>
+                                    </tr>
+                                    <tr>
+                                        <th>💰 Tổng chi tiêu:</th>
+                                        <td><span id="total-spent" class="fw-bold">0 VNĐ</span></td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <table class="table table-sm">
+                                    <tr>
+                                        <th>🎁 Lượt miễn phí:</th>
+                                        <td><span class="badge bg-success">1 lượt</span></td>
+                                    </tr>
+                                    <tr>
+                                        <th>💰 Lượt từ chi tiêu:</th>
+                                        <td><span id="spend-spins" class="badge bg-primary">0 lượt</span></td>
+                                    </tr>
+                                    <tr>
+                                        <th>💎 Lượt từ hạng:</th>
+                                        <td><span id="rank-bonus" class="badge bg-warning">0 lượt</span></td>
+                                    </tr>
+                                    <tr class="table-active">
+                                        <th>🎯 Tổng lượt quay:</th>
+                                        <td><span id="total-spins" class="badge bg-danger">0 lượt</span></td>
+                                    </tr>
+                                    <tr>
+                                        <th>🔄 Đã sử dụng:</th>
+                                        <td><span id="used-spins" class="badge bg-secondary">0 lượt</span></td>
+                                    </tr>
+                                    <tr class="table-success">
+                                        <th>✅ Còn lại:</th>
+                                        <td><span id="spins-remaining" class="badge bg-success fw-bold">0 lượt</span></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lợi ích -->
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">💎 Lợi Ích Khi Tham Gia</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>🎁 Giải thưởng:</h6>
+                                <ul>
+                                    <li>💰 Tiền thưởng được cộng TRỰC TIẾP vào tổng chi tiêu</li>
+                                    <li>📈 Giúp tăng hạng thành viên NHANH CHÓNG</li>
+                                    <li>🎯 Đạt mốc chi tiêu để nhận THÊM LƯỢT QUAY</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>✨ Ưu đãi thành viên:</h6>
+                                <ul>
+                                    <li>💎 Hạng càng cao → càng nhiều lượt quay</li>
+                                    <li>🎁 Giảm giá đặt phòng tốt hơn</li>
+                                    <li>⭐ Trải nghiệm dịch vụ cao cấp</li>
+                                    <li>🔄 Vòng quay tích cực: thưởng → tăng rank → thêm lượt quay</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="alert alert-success mt-3">
+                            <strong>🚀 Chiến lược thông minh:</strong> Sử dụng lượt quay miễn phí → Trúng thưởng → Tăng tổng chi tiêu → 
+                            Đạt mốc mới → Nhận thêm lượt quay → Tiếp tục tham gia!
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Vòng Quay -->
+    <div class="modal fade" id="wheelModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">🎯 Vòng Quay Tử Thần</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <div id="wheel-result" class="alert" style="display: none;"></div>
+                    <div class="wheel-container">
+                        <div class="center-dot"></div>
+                        <div class="wheel-pointer"></div>
+                        <div class="wheel" id="prize-wheel"></div>
+                    </div>
+                    <div class="prize-visual-guide" id="prize-guide"></div>
+                    <div class="mt-3">
+                        <p id="spin-info" class="fw-bold">Lượt quay còn lại: <span id="remaining-spins-count">0</span></p>
+                        <p class="text-muted small">Thời gian sự kiện: 01/08 - 31/12</p>
+                        <div class="spin-count" id="spin-count">Đã quay: 0 lần</div>
+                        <div class="debug-info" id="debug-info"></div>
+                        <button id="spin-btn" class="btn participate-btn mt-2">QUAY NGAY</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DANH SÁCH GIẢI THƯỞNG - KHỚP VỚI SERVER (app.py)
+            const testPrizes = [
+                { name: 'Chúc bạn may mắn lần sau', value: 0, probability: 40, color: '#ff6b6b', index: 0 },     // Ô 1: May mắn (40%)
+                { name: '50,000 VNĐ', value: 50000, probability: 10, color: '#4ecdc4', index: 1 },              // Ô 2: 50K (10%)
+                { name: 'Chúc bạn may mắn lần sau', value: 0, probability: 25, color: '#45b7d1', index: 2 },   // Ô 3: May mắn (25%)
+                { name: '100,000 VNĐ', value: 100000, probability: 5, color: '#96ceb4', index: 3 },           // Ô 4: 100K (5%)
+                { name: 'Chúc bạn may mắn lần sau', value: 0, probability: 15, color: '#f7dc6f', index: 4 },  // Ô 5: May mắn (15%)
+                { name: '200,000 VNĐ', value: 200000, probability: 3, color: '#f8c471', index: 5 },          // Ô 6: 200K (3%)
+                { name: '500,000 VNĐ', value: 500000, probability: 2, color: '#9b59b6', index: 6 }           // Ô 7: 500K (2%)
+            ];
+
+            let spinCount = 0;
+            let isSpinning = false;
+            let currentRotation = 0;
+            let userSpinsRemaining = 0;
+            let currentUser = null;
+
+            // Kiểm tra trạng thái đăng nhập và lượt quay
+            function checkLoginAndSpins() {
+                console.log('🔄 Kiểm tra trạng thái...');
+                fetch('/event/check-eligibility')
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('📊 Dữ liệu trả về:', data);
+                        updateUI(data);
+                    })
+                    .catch(error => {
+                        console.error('Error checking eligibility:', error);
+                        showLoginRequired();
+                    });
+            }
+
+            // Cập nhật giao diện dựa trên trạng thái
+            function updateUI(data) {
+                const statusCard = document.querySelector('#event-status .card');
+                const statusTitle = document.querySelector('#event-status .card-title');
+                const statusText = document.querySelector('#event-status .card-text');
+                const startBtn = document.getElementById('start-wheel');
+                const spinDetails = document.getElementById('spin-details');
+                
+                if (data.eligible === false && data.message === 'Vui lòng đăng nhập') {
+                    // Chưa đăng nhập
+                    statusCard.className = 'card status-card not-eligible';
+                    statusTitle.innerHTML = '🔒 Đăng nhập để tham gia';
+                    statusText.innerHTML = 'Bạn cần đăng nhập để tham gia sự kiện';
+                    startBtn.innerHTML = '🔐 Đăng nhập ngay';
+                    startBtn.disabled = false;
+                    startBtn.onclick = function() { window.location.href = '/login'; };
+                    spinDetails.style.display = 'none';
+                } 
+                else if (data.eligible === false && data.message === 'Sự kiện đã kết thúc') {
+                    // Sự kiện đã kết thúc
+                    statusCard.className = 'card status-card ended';
+                    statusTitle.innerHTML = '⏰ Sự kiện đã kết thúc';
+                    statusText.innerHTML = 'Sự kiện Vòng Quay Tử Thần đã kết thúc. Hẹn gặp lại năm sau!';
+                    startBtn.innerHTML = '⏰ Sự kiện đã kết thúc';
+                    startBtn.disabled = true;
+                    spinDetails.style.display = 'none';
+                }
+                else if (data.eligible === false && !data.has_bookings) {
+                    // Có đăng nhập nhưng chưa có booking
+                    statusCard.className = 'card status-card not-eligible';
+                    statusTitle.innerHTML = '📋 Chưa đủ điều kiện';
+                    statusText.innerHTML = 'Tài khoản của bạn chưa có đặt phòng nào trong thời gian sự kiện';
+                    startBtn.innerHTML = '🏨 Đặt phòng ngay';
+                    startBtn.disabled = false;
+                    startBtn.onclick = function() { window.location.href = '/'; };
+                    spinDetails.style.display = 'none';
+                }
+                else if (data.eligible === false && data.spins_remaining === 0) {
+                    // Đã hết lượt quay
+                    statusCard.className = 'card status-card not-eligible';
+                    statusTitle.innerHTML = '🎯 Đã hết lượt quay';
+                    statusText.innerHTML = `Bạn đã sử dụng hết ${data.used_spins}/${data.total_spins} lượt quay`;
+                    startBtn.innerHTML = '🎯 Đã hết lượt quay';
+                    startBtn.disabled = true;
+                    
+                    // Hiển thị thông tin chi tiết
+                    updateSpinDetails(data);
+                    spinDetails.style.display = 'block';
+                }
+                else if (data.eligible === true) {
+                    // Có thể quay
+                    statusCard.className = 'card status-card eligible';
+                    statusTitle.innerHTML = '✅ Sẵn sàng tham gia!';
+                    statusText.innerHTML = `Bạn còn ${data.spins_remaining} lượt quay. Hãy thử vận may!`;
+                    startBtn.innerHTML = '🎮 Bắt Đầu Vòng Quay';
+                    startBtn.disabled = false;
+                    startBtn.onclick = function() { 
+                        const modal = new bootstrap.Modal(document.getElementById('wheelModal'));
+                        modal.show();
+                        setTimeout(() => { createPrizeLabels(); }, 100);
+                    };
+                    
+                    // Lưu thông tin
+                    userSpinsRemaining = data.spins_remaining;
+                    currentUser = data.username;
+                    
+                    // Cập nhật thông tin chi tiết
+                    updateSpinDetails(data);
+                    spinDetails.style.display = 'block';
+                    
+                    // Cập nhật modal
+                    document.getElementById('remaining-spins-count').textContent = data.spins_remaining;
+                    
+                    console.log(`✅ User ${currentUser} có ${userSpinsRemaining} lượt quay`);
+                }
+            }
+
+            // Cập nhật thông tin chi tiết lượt quay
+            function updateSpinDetails(data) {
+                if (data.username) document.getElementById('user-username').textContent = data.username;
+                if (data.rank) document.getElementById('user-rank').textContent = data.rank;
+                if (data.total_spent) document.getElementById('total-spent').textContent = data.total_spent.toLocaleString() + ' VNĐ';
+                if (data.spend_spins !== undefined) document.getElementById('spend-spins').textContent = data.spend_spins + ' lượt';
+                if (data.rank_bonus !== undefined) document.getElementById('rank-bonus').textContent = data.rank_bonus + ' lượt';
+                if (data.total_spins !== undefined) document.getElementById('total-spins').textContent = data.total_spins + ' lượt';
+                if (data.used_spins !== undefined) document.getElementById('used-spins').textContent = data.used_spins + ' lượt';
+                if (data.spins_remaining !== undefined) document.getElementById('spins-remaining').textContent = data.spins_remaining + ' lượt';
+            }
+
+            // Hiển thị yêu cầu đăng nhập
+            function showLoginRequired() {
+                const statusCard = document.querySelector('#event-status .card');
+                const statusTitle = document.querySelector('#event-status .card-title');
+                const statusText = document.querySelector('#event-status .card-text');
+                const startBtn = document.getElementById('start-wheel');
+                
+                statusCard.className = 'card status-card not-eligible';
+                statusTitle.innerHTML = '🔒 Yêu cầu đăng nhập';
+                statusText.innerHTML = 'Vui lòng đăng nhập để tham gia sự kiện';
+                startBtn.innerHTML = '🔐 Đăng nhập ngay';
+                startBtn.disabled = false;
+                startBtn.onclick = function() { window.location.href = '/login'; };
+            }
+
+            // Tạo nhãn giải thưởng
+            function createPrizeLabels() {
+                const wheel = document.getElementById('prize-wheel');
+                const guide = document.getElementById('prize-guide');
+                wheel.innerHTML = '';
+                guide.innerHTML = '';
+                
+                const numPrizes = testPrizes.length;
+                const sectorAngle = 360 / numPrizes; // 51.43 độ mỗi ô
+                const radius = 185;
+                
+                // Góc bắt đầu: -90 độ để ô đầu tiên ở trên cùng
+                const startAngle = -90;
+                
+                console.log(`🎯 Tạo ${numPrizes} nhãn giải thưởng, mỗi ô ${sectorAngle} độ`);
+
+                testPrizes.forEach((prize, index) => {
+                    // Tính góc tâm của ô (tính từ startAngle)
+                    const centerAngle = startAngle + (index * sectorAngle) + (sectorAngle / 2);
+                    const angleRad = centerAngle * Math.PI / 180;
+                    
+                    // Vị trí nhãn (từ tâm ra ngoài)
+                    const offsetX = Math.cos(angleRad) * (radius - 70);
+                    const offsetY = Math.sin(angleRad) * (radius - 70);
+                    
+                    const label = document.createElement('div');
+                    label.className = 'prize-label';
+                    label.dataset.index = index;
+                    label.dataset.prizeName = prize.name;
+                    
+                    label.style.left = `calc(50% + ${offsetX}px)`;
+                    label.style.top = `calc(50% + ${offsetY}px)`;
+                    
+                    // Xoay nhãn để dễ đọc
+                    label.style.transform = `translate(-50%, -50%) rotate(${centerAngle}deg)`;
+                    
+                    if (prize.value === 0) {
+                        label.classList.add('special');
+                        label.textContent = 'May mắn lần sau';
+                        label.style.fontSize = '10px';
+                        label.style.width = '100px';
+                        label.style.lineHeight = '1.2';
+                    } else {
+                        label.textContent = `${(prize.value / 1000).toFixed(0)}K VNĐ`;
+                        label.style.fontSize = '12px';
+                        label.style.width = '80px';
+                    }
+                    
+                    wheel.appendChild(label);
+                    
+                    // Tạo dot hướng dẫn
+                    const dot = document.createElement('div');
+                    dot.className = 'prize-dot';
+                    dot.style.backgroundColor = prize.color;
+                    dot.dataset.index = index;
+                    dot.title = `Ô ${index + 1}: ${prize.name}`;
+                    guide.appendChild(dot);
+                });
+                
+                console.log('✅ Đã tạo xong nhãn giải thưởng');
+            }
+
+            // Tính góc dừng CHÍNH XÁC
+            function calculateStopAngle(prizeIndex) {
+                const numPrizes = 7;
+                const sectorAngle = 360 / numPrizes;
+                
+                // Góc bắt đầu của ô đầu tiên (có thể cần điều chỉnh)
+                const startAngle = 0; // hoặc 0, 90, -45 tùy vào thiết kế
+                
+                // Góc tâm của ô giải thưởng
+                const prizeCenterAngle = startAngle + (prizeIndex * sectorAngle) + (sectorAngle / 2);
+                
+                // Góc quay để đưa ô đó lên vị trí mũi tên (0°)
+                let stopAngle = 360 - (prizeCenterAngle % 360);
+                
+                // Thêm ít nhất 3 vòng
+                stopAngle += 3 * 360;
+                
+                return stopAngle;
+            }
+
+            // Xử lý quay
+            document.getElementById('spin-btn').addEventListener('click', function() {
+                if (isSpinning) {
+                    console.log('⏳ Đang quay, vui lòng chờ...');
+                    return;
+                }
+                
+                // Kiểm tra lượt quay
+                if (userSpinsRemaining <= 0) {
+                    alert('Bạn đã hết lượt quay!');
+                    return;
+                }
+                
+                const btn = this;
+                const wheel = document.getElementById('prize-wheel');
+                const resultDiv = document.getElementById('wheel-result');
+                const spinCountElement = document.getElementById('spin-count');
+                const debugElement = document.getElementById('debug-info');
+                const remainingSpinsElement = document.getElementById('remaining-spins-count');
+                
+                isSpinning = true;
+                btn.disabled = true;
+                btn.innerHTML = '🎯 Đang xử lý...';
+                
+                console.log('🔄 Gửi request quay tới server...');
+                
+                // Gửi request đến server để quay
+                fetch('/event/spin-wheel', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('📊 Server response:', data);
+                    
+                    if (data.error) {
+                        alert(data.error);
+                        isSpinning = false;
+                        btn.disabled = false;
+                        btn.innerHTML = 'QUAY NGAY';
+                        return;
+                    }
+                    
+                    // Cập nhật số lượt quay
+                    userSpinsRemaining = data.spins_remaining;
+                    remainingSpinsElement.textContent = userSpinsRemaining;
+                    
+                    spinCount++;
+                    spinCountElement.textContent = `Đã quay: ${spinCount} lần`;
+                    
+                    resultDiv.style.display = 'none';
+                    debugElement.textContent = '';
+                    
+                    // Tìm index giải thưởng trong testPrizes
+                    const prizeIndex = testPrizes.findIndex(p => p.value === data.prize_value);
+                    
+                    console.log(`🎲 Server prize: ${data.prize_name} (${data.prize_value}), Index: ${prizeIndex}`);
+                    
+                    if (prizeIndex === -1) {
+                        console.error('❌ Không tìm thấy giải thưởng trong testPrizes');
+                        alert('Lỗi: Giải thưởng không khớp!');
+                        isSpinning = false;
+                        btn.disabled = false;
+                        btn.innerHTML = 'QUAY NGAY';
+                        return;
+                    }
+                    
+                    // Tính góc quay
+                    const stopAngle = calculateStopAngle(prizeIndex);
+                    
+                    // Reset wheel
+                    wheel.style.transition = 'none';
+                    wheel.style.transform = `rotate(0deg)`;
+                    
+                    void wheel.offsetWidth;
+                    
+                    // Bắt đầu animation
+                    wheel.style.transition = `transform 4.5s cubic-bezier(0.25, 0.1, 0.25, 1)`;
+                    wheel.style.transform = `rotate(${stopAngle}deg)`;
+                    
+                    currentRotation = stopAngle % 360;
+                    
+                    // Hiển thị kết quả sau khi quay xong
+                    setTimeout(() => {
+                        showPrizeResult(data.prize_name, data.prize_value, prizeIndex);
+                        
+                        // Cập nhật UI sau khi quay
+                        setTimeout(() => {
+                            console.log('🔄 Cập nhật UI sau khi quay...');
+                            checkLoginAndSpins();
+                        }, 2000);
+                        
+                        setTimeout(() => {
+                            isSpinning = false;
+                            btn.disabled = false;
+                            btn.innerHTML = 'QUAY NGAY';
+                            console.log('✅ Sẵn sàng quay tiếp');
+                        }, 1000);
+                        
+                    }, 4500);
+                })
+                .catch(error => {
+                    console.error('Error spinning wheel:', error);
+                    alert('Có lỗi xảy ra. Vui lòng thử lại!');
+                    isSpinning = false;
+                    btn.disabled = false;
+                    btn.innerHTML = 'QUAY NGAY';
+                });
+            });
+
+            // Hiển thị kết quả
+            function showPrizeResult(prizeName, prizeValue, prizeIndex) {
+                const resultDiv = document.getElementById('wheel-result');
+                const dots = document.querySelectorAll('.prize-dot');
+                
+                resultDiv.style.display = 'block';
+                
+                // Highlight dot tương ứng
+                dots.forEach(dot => dot.classList.remove('active'));
+                
+                if (dots[prizeIndex]) {
+                    dots[prizeIndex].classList.add('active');
+                }
+                
+                // Hiển thị thông báo kết quả
+                if (prizeValue > 0) {
+                    resultDiv.className = 'alert alert-success result-animation';
+                    resultDiv.innerHTML = `
+                        <h4 class="mb-2">🎉 CHÚC MỪNG!</h4>
+                        <p class="mb-1">Mũi tên chỉ vào:</p>
+                        <h3 class="text-success">${prizeValue.toLocaleString()} VNĐ</h3>
+                        <p class="small">${prizeName} (Ô số ${prizeIndex + 1})</p>
+                        <div class="alert alert-info mt-2 mb-0">
+                            <strong>💰 Giải thưởng đã được cộng vào tổng chi tiêu của bạn!</strong><br>
+                            Tổng chi tiêu mới: <strong>${document.getElementById('total-spent').textContent}</strong>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.className = 'alert alert-warning result-animation';
+                    resultDiv.innerHTML = `
+                        <h4 class="mb-2">💫 CHÚC BẠN MAY MẮN LẦN SAU!</h4>
+                        <p class="mb-1">Mũi tên chỉ vào:</p>
+                        <h4 class="text-warning">${prizeName}</h4>
+                        <p class="small text-muted">(Ô số ${prizeIndex + 1})</p>
+                        <div class="alert alert-secondary mt-2 mb-0">
+                            <strong>🎯 Bạn còn ${userSpinsRemaining} lượt quay</strong><br>
+                            Hãy thử lại ở lượt tiếp theo!
+                        </div>
+                    `;
+                }
+                
+                console.log(`🏆 Kết quả: ${prizeName}, Index: ${prizeIndex}, Ô số: ${prizeIndex + 1}`);
+            }
+
+            // Kiểm tra ngay khi trang tải
+            checkLoginAndSpins();
+
+            // Tự động refresh thông tin mỗi 30 giây
+            setInterval(checkLoginAndSpins, 30000);
+            
+            // Debug: log ra thông tin
+            console.log('✅ Event page loaded successfully');
+            console.log('🎯 Prize list:', testPrizes.map((p, i) => `Ô ${i + 1}: ${p.name} (${p.value} VNĐ)`));
+        });
+    </script>
+</body>
+</html>

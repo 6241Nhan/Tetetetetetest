@@ -219,6 +219,91 @@
         </div>
     </nav>
 
+    <!-- Banner Sự Kiện Đặc Biệt - Vòng Quay Tử Thần -->
+    <div id="event-banner" class="event-banner-container">
+        <div class="event-marquee">
+            <a href="/event" class="event-link" id="event-marquee-link">
+                <span class="event-text">🎉 Tham gia sự kiện đặc biệt 🎉</span>
+                <span class="event-subtext">Khám phá khách sạn mơ ước của bạn</span>
+            </a>
+        </div>
+    </div>
+
+    <style>
+        .event-banner-container {
+            position: relative;
+            top: 76px;
+            z-index: 1000;
+            background: linear-gradient(90deg, #ff6b6b, #ff8e53, #ff6b6b);
+            background-size: 200% 100%;
+            animation: gradientShift 3s ease infinite;
+            padding: 10px 0;
+            border-bottom: 2px solid #ffd700;
+        }
+
+        .event-marquee {
+            white-space: nowrap;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .event-link {
+            display: inline-flex;
+            align-items: center;
+            text-decoration: none;
+            color: white;
+            font-weight: bold;
+            font-size: 1.1rem;
+            padding: 5px 20px;
+            animation: marquee 20s linear infinite;
+        }
+
+        .event-text {
+            margin-right: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .event-subtext {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            font-weight: normal;
+        }
+
+        @keyframes marquee {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 200% 0%; }
+            50% { background-position: 0% 0%; }
+            100% { background-position: 200% 0%; }
+        }
+
+        .event-link:hover {
+            color: #ffeb3b;
+            transform: scale(1.05);
+            transition: all 0.3s ease;
+        }
+    </style>
+
+    <script>
+        // Kiểm tra thời gian sự kiện (8 tháng đầu năm)
+        document.addEventListener('DOMContentLoaded', function() {
+            const now = new Date();
+            const currentMonth = now.getMonth() + 1; // 1-12
+            const eventBanner = document.getElementById('event-banner');
+            
+            // Ẩn banner nếu không trong thời gian sự kiện (tháng 8-12)
+            if (currentMonth < 8) {
+                eventBanner.style.display = 'none';
+            }
+            else {
+                eventBanner.style.display = 'block';
+            }
+        });
+    </script>
+
     <!-- Hero + Search -->
     <div class="hero">
         <h1>Khám phá khách sạn mơ ước của bạn ✨</h1>
@@ -538,3 +623,4 @@
     </div>
 </body>
 </html>
+
